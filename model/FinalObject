@@ -43,6 +43,10 @@ public class FinalObject {
 	public float getPrice() {
 		return price;
 	}
+	
+	public void setPrice(float price) {
+		 this.price = price;
+	}
 
 	public HashMap<String, Float> getStack() {
 		return stack;
@@ -67,4 +71,6 @@ public class FinalObject {
 	public static Comparator<FinalObject> getcountComparator() {
 		return countComparator;
 	}
+
+
 }
