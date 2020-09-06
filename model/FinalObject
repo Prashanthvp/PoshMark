@@ -1,0 +1,70 @@
+package model;
+import java.util.Comparator;
+import java.util.HashMap;
+
+public class FinalObject {	
+
+	private String name;	
+
+	private float price;
+
+	private double totalCount = 0;
+
+	private HashMap<String, Float> stack;
+
+	static Comparator<FinalObject> priceComparator = Comparator.comparing(FinalObject::getPrice);
+
+	static Comparator<FinalObject> countComparator = Comparator.comparing(FinalObject::getCount).reversed();	
+	
+	public FinalObject(String name, float price, HashMap<String, Float> stack) {
+
+		this.name = name;		
+
+		this.price = price;
+
+		this.stack = stack;		
+	}
+
+	public FinalObject(String name, float price, HashMap<String, Float> stack, double totalCount) {
+
+		this.name = name;		
+
+		this.price = price;
+
+		this.stack = stack;
+
+		this.totalCount = totalCount;
+	}
+
+	public String getName() {
+		return name;
+	}	
+
+	public float getPrice() {
+		return price;
+	}
+
+	public HashMap<String, Float> getStack() {
+		return stack;
+	}
+
+	public void getStack(HashMap<String, Float> stack) {
+		this.stack = stack;
+	}
+	
+	public double getCount() {
+		return totalCount;
+	}
+	
+	public void setCount(double totalCount) {
+		this.totalCount = totalCount;
+	}
+
+	public static Comparator<FinalObject> getpriceComparator() {
+		return priceComparator;
+	}	
+
+	public static Comparator<FinalObject> getcountComparator() {
+		return countComparator;
+	}
+}
