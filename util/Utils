@@ -1,0 +1,140 @@
+package util;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import model.FinalObject;
+import model.ServerCPUDetails;
+
+public class Utils {	
+
+	public static List<List<Integer>> combinationSum(List<Integer> candidates, int target, float limit) {
+		List<List<Integer>> result = new ArrayList<>();
+		List<Integer> temp = new ArrayList<>();
+		helper(candidates, 0, target, 0, temp, result ,limit);
+		return result;
+	}
+
+	private static void helper(List<Integer> candidates, int start, int target, int sum,
+			List<Integer> list, List<List<Integer>> result, float limit) {
+
+		if(sum>target)
+			return;
+
+		if(sum==target){
+			if(checkfrequency(limit,list))
+				result.add(new ArrayList<>(list));
+			return;
+		}
+
+		for(int i=start; i<candidates.size(); i++) {
+			list.add(candidates.get(i));
+			helper(candidates, i, target, sum+candidates.get(i), list, result, limit);
+			list.remove(list.size()-1);
+		}
+	}
+
+	private static boolean checkfrequency(float limit, List<Integer> list) {
+
+		Map<Integer, Integer> hm = new HashMap<Integer, Integer>(); 
+
+		for (Integer i : list) { 
+			Integer j = hm.get(i); 
+
+			if(j == null)
+				hm.put(i, 1);
+			else {
+				int val = hm.get(i);
+
+				if (val >= limit)
+					return false;
+				else
+					hm.put(i, val+1);
+			}             
+		}
+		return true;
+	}
+
+
+	public static void printResult(List<FinalObject> result , boolean printMin) {
+
+		if(!result.isEmpty()) {		
+			for(FinalObject ar:result) {
+				System.out.println("Name: "+ ar.getName());
+
+				System.out.println("Price: "+ar.getPrice());
+
+				//System.out.println("Count: "+ar.getCount());
+
+				HashMap<String, Float> c = ar.getStack();
+
+				System.out.println("Stack Details");
+
+				for (Map.Entry<String, Float> entry : c.entrySet()) {
+					if (entry.getValue() > 0)
+						System.out.println(entry.getKey() + ":" + entry.getValue());
+				}	
+
+				System.out.println();
+
+				if (printMin)
+					return;				
+			}
+		} else 			
+			System.out.println("Combo not possible for given price");
+	}
+
+
+	public static List<Integer> getCPUsCount(String region) {
+
+		List<Integer> cpus = new ArrayList<>();
+
+		HashMap<String, Float> map = ServerCPUDetails.serverDetails.get(region);
+
+		HashMap<String, Integer> cpuSize = ServerCPUDetails.serverCPUDetailSize;	
+
+		for (Map.Entry<String, Float> entry : map.entrySet()) {
+			String key = entry.getKey();
+			if (cpuSize.containsKey(key))
+				cpus.add(cpuSize.get(key));			
+		}	
+		return cpus;
+	}	
+
+	public static float getTotalCPUPrice(String region) {
+
+		float price = 0;
+		
+		HashMap<String, Float> map = ServerCPUDetails.serverDetails.get(region);			
+
+		for (Map.Entry<String, Float> entry : map.entrySet()) {
+			price = price + entry.getValue();			
+		}	
+
+		return price;		
+	}
+
+
+	public static int sum(List<Integer> list) {
+		int sum = 0; 
+
+		for (int i : list)
+			sum = sum + i;
+
+		return sum;
+	}
+
+	public static HashMap<Integer, String> getserverCPUDetails() {
+
+		HashMap<Integer,String> cpuDetails = new HashMap<>();		
+
+		HashMap<String, Integer> cpuSize = ServerCPUDetails.serverCPUDetailSize;
+
+		for (Map.Entry<String, Integer> entry : cpuSize.entrySet()) 
+			cpuDetails.put(entry.getValue(), entry.getKey());
+
+		return cpuDetails;	
+	}
+}
