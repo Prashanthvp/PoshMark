@@ -1,0 +1,132 @@
+package test;
+
+
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Test;
+import model.FinalObject;
+import service.CombinationCalcService;
+
+public class MainTest {
+
+	private final CombinationCalcService combinationCalcService = new CombinationCalcService();
+
+	@Test
+	public void Test1() {		
+
+		int hours = 8;
+
+		int cpus = 129;	
+
+		double precision = 1e-4;
+
+		double asiaPrice = 76.399994;
+
+		Map<String,Float> asiaMap = new HashMap<>();
+
+		asiaMap.put("large", 1.0f);
+
+		asiaMap.put("8xlarge", 8.0f);        
+
+		double uswPrice = 84.32001;
+
+		Map<String,Float> useMap = new HashMap<>();
+
+		useMap.put("large", 1.0f);
+
+		useMap.put("8xlarge", 8.0f);
+
+		double usePrice = 90.56;
+
+
+		Map<String,Float> uswMap = new HashMap<>();
+
+		uswMap.put("large", 1.0f);
+
+		uswMap.put("8xlarge", 8.0f);		
+
+		List<FinalObject> ret = combinationCalcService.calculatePriceforHoursandCPU(hours,cpus);		
+
+		for (FinalObject amd : ret) {
+			if ("ASIA".equals(amd.getName())) {
+				assertEquals(asiaPrice, amd.getPrice(),precision);
+				assertEquals(asiaMap, amd.getStack());
+			}
+
+			if ("USW".equals(amd.getName())) {
+				assertEquals(uswPrice, amd.getPrice(),precision);
+				assertEquals(uswMap, amd.getStack());
+			}
+
+			if ("USE".equals(amd.getName())) {
+				assertEquals(usePrice, amd.getPrice(),precision);
+				assertEquals(useMap, amd.getStack());
+			}
+		}
+	}
+
+	@Test
+	public void Test2() {		
+
+		int hours = 8;
+
+		float price = 76.399994f;	
+
+		double precision = 1e-4;
+
+		int asiaCPUS = 129;	
+
+		Map<String,Float> asiaMap = new HashMap<>();
+
+		asiaMap.put("large", 1.0f);
+
+		asiaMap.put("8xlarge", 8.0f);			
+
+		List<FinalObject> ret = combinationCalcService.calculateCPUsforHoursandPrice(hours, price);		
+
+		for (FinalObject amd : ret) {
+			if ("ASIA".equals(amd.getName())) {
+				if (amd.getPrice() == price) {
+					assertEquals(asiaCPUS, amd.getCount(),precision);
+					assertEquals(asiaMap, amd.getStack());
+				}
+			}
+		}
+	}	
+
+	@Test
+	public void Test3() {		
+
+		int hours = 7;
+
+		int minCPU = 180;		
+
+		int maxPrice = 195;
+
+		float price = 194.59999f;	
+
+		double precision = 1e-4;
+
+		int asiaCPUS = 374;
+
+		Map<String,Float> asiaMap = new HashMap<>();
+
+		asiaMap.put("large", 6.0f);
+
+		asiaMap.put("8xlarge", 23.0f);			
+
+		List<FinalObject> ret = combinationCalcService.calculateComboforPriceHourCPU(hours, minCPU, maxPrice);		
+
+		for (FinalObject amd : ret) {
+			if ("ASIA".equals(amd.getName())) {
+				if (amd.getPrice() == price) {
+					assertEquals(asiaCPUS, amd.getCount(),precision);
+					assertEquals(asiaMap, amd.getStack());
+				}
+			}
+		}
+	}
+}
