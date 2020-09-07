@@ -4,31 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
 import model.FinalObject;
 import model.ServerCPUDetails;
 import util.Utils;
 
-public class CombinationCalcService {
-
-	/*Get the CPU count for the price and hours expected by the user
-	 * 
-	 * If the combo cpu count is greater or equal than user cpu count, display the combo or else print "Combo Not possible"
-	 * 
-	 * */
-
-	public List<FinalObject> calculateComboforPriceHourCPU(int hours, int cpus, float price) {
-
-		List<FinalObject> r = calculateCPUsforHoursandPrice(hours,price);
-
-		List<FinalObject> filteredList = r.stream().filter(x -> x.getCount() >= cpus).collect(Collectors.toList());		
-
-		return filteredList;
-	}
-
+public class CombinationCalcService {	
 
 	/*Get the minimum cost to be paid to achieve the combination of CPUs and hours expected by the user
 	 * 
@@ -48,28 +30,10 @@ public class CombinationCalcService {
 
 			List<Integer> cpuArray = Utils.getCPUsCount(region);
 
-			float totalCPUCountPerRegion = Utils.sum(cpuArray);
+			List<List<Integer>> cpuCombo = Utils.combinationSum(cpuArray, requiredCPUCount);
 
-			float totalCPUPricePerRegion = Utils.getTotalCPUPrice(region);
-
-			// Get the count of max possible full stack for specific region
-
-			float fullStack = (float) Math.ceil(requiredCPUCount/totalCPUCountPerRegion);			
-
-			int maxFullStackCPUsCount = (int)(fullStack * totalCPUCountPerRegion);
-
-			int remainingStackToBeObtained = maxFullStackCPUsCount - requiredCPUCount;
-
-			List<List<Integer>> removalCombo = Utils.combinationSum(cpuArray, remainingStackToBeObtained, fullStack);
-
-			float priceOfFullStackPerHour = fullStack * totalCPUPricePerRegion;
-
-			float priceOfFullStackforRequiredHours = priceOfFullStackPerHour * hours;
-
-			//For certain region, combo is not possible for remaining CPUs count.
-
-			if(!removalCombo.isEmpty())			
-				calculateFinalPricePerRegion(region, priceOfFullStackforRequiredHours, fullStack, removalCombo, smallestComboInAllRegions);
+			if(!cpuCombo.isEmpty())			
+				calculateFinalPricePerRegion(region, hours, cpuCombo, smallestComboInAllRegions);			
 
 			Collections.sort(smallestComboInAllRegions,FinalObject.getpriceComparator());	//To get smallest price combo in all regions	
 
@@ -79,65 +43,60 @@ public class CombinationCalcService {
 
 
 	/*
-	 * Calculate the price of each combo after removal in each region
+	 * Calculate the price of each combo in each region
 	 * 
 	 * Minimum price combo per region is added to "smallestComboInAllRegions" list
 	 * 
 	 */
 
-	private void calculateFinalPricePerRegion(String region, float priceOfFullStackforRequiredHours, float maxFullstack,
-			List<List<Integer>> removalCombinations,List<FinalObject> smallestComboInAllRegions) {
+	private void calculateFinalPricePerRegion(String region, int hours, List<List<Integer>> cpuCombinations,
+			List<FinalObject> smallestComboInAllRegions) {
 
-		List<FinalObject> combosInParticularRegion = new ArrayList<FinalObject>();		
-
-		// Sort the list of combinations of a single region based on price 
-		Collections.sort(combosInParticularRegion, FinalObject.getpriceComparator()); 
+		List<FinalObject> combosInParticularRegion = new ArrayList<FinalObject>();
 
 		// Remove the extra CPUs from full stack to achieve the user required CPUs count
 
-		for (List<Integer> removalCombination:removalCombinations) 
-			combosInParticularRegion.add(calculatePricePerComboRemoval(region, maxFullstack, priceOfFullStackforRequiredHours,removalCombination));		
+		for (List<Integer> cpuCombination:cpuCombinations) 
+			combosInParticularRegion.add(calculatePricePerComboRemoval(region, hours, cpuCombination));		
+
+		// Sort the list of combinations of a single region based on price 
+		Collections.sort(combosInParticularRegion, FinalObject.getpriceComparator());
 
 		smallestComboInAllRegions.add(combosInParticularRegion.get(0));  //To get smallest price combo in a particular region.
 	}
 
-	private FinalObject calculatePricePerComboRemoval(String region, float count, float priceOfFullStackforRequiredHours, List<Integer> removalCombination) {
+	private FinalObject calculatePricePerComboRemoval(String region, int hours, List<Integer> cpuCombination) {
 
 		HashMap<Integer, String> cpuNameMap = Utils.getserverCPUDetails();
 
 		HashMap<String, Float> cpuSizeMap = ServerCPUDetails.serverDetails.get(region);
 
-		HashMap<String, Float> maxStack = buildMaxStack(cpuSizeMap,count);
+		HashMap<String, Float> newStack = new HashMap<String, Float>();
 
-		for (Integer i:removalCombination) {
+		float totalPrice = 0;
+
+		for (Integer i:cpuCombination) {
 
 			String sizeName = cpuNameMap.get(i);
 
 			Float pricePerSize = cpuSizeMap.get(cpuNameMap.get(i));
 
-			priceOfFullStackforRequiredHours = priceOfFullStackforRequiredHours - pricePerSize;			
+			if (newStack.containsKey(sizeName)) 				
+				newStack.put(sizeName, newStack.get(sizeName) + 1f);				
+			else 
+				newStack.put(sizeName,1f);			
 
-			maxStack.put(sizeName, maxStack.get(sizeName) - 1);  //Remove a single instance to achieve the required CPU size.
+			totalPrice = totalPrice + pricePerSize;		
 		}
 
-		FinalObject f = new FinalObject(region, priceOfFullStackforRequiredHours, maxStack);
+		totalPrice = totalPrice * hours;
+
+		FinalObject f = new FinalObject(region, totalPrice, newStack);
 
 		return f;
 	}
-
-	/*Max count of CPUs per size for the price*/
-	private HashMap<String, Float> buildMaxStack(HashMap<String, Float> c, float max) {
-
-		HashMap<String, Float> maxStack = new HashMap<>();
-
-		for (Map.Entry<String, Float> entry : c.entrySet()) 
-			maxStack.put(entry.getKey(), max);
-
-		return maxStack;
-	}	
-
-
-
+	
+	
 	/*Get the maximum CPU count that can obtained for the price spent by the user for the required hours
 	 * 
 	 * Calculation is done for all regions i.e USE,USW,Asia
@@ -206,8 +165,8 @@ public class CombinationCalcService {
 		};
 	}
 
-	private void calcForRemainingcost(float remainingCost, float totalHours, HashMap<String, Float> stackdetails,HashMap<String, Integer> cpuDetails,
-			FinalObject obj) {
+	private void calcForRemainingcost(float remainingCost, float totalHours, HashMap<String, Float> stackdetails,
+			HashMap<String, Integer> cpuDetails, FinalObject obj) {
 
 		String newCPUName = null ;
 
@@ -252,4 +211,21 @@ public class CombinationCalcService {
 			obj.setPrice(obj.getPrice() + newPrice);
 		}
 	}
+	
+	
+	/*Get the CPU count for the price and hours expected by the user
+	 * 
+	 * If the combo CPU count is greater or equal than user CPU count, display the combo or else print "Combo Not possible"
+	 * 
+	 * */
+
+	public List<FinalObject> calculateComboforPriceHourCPU(int hours, int cpus, float price) {
+
+		List<FinalObject> r = calculateCPUsforHoursandPrice(hours,price);
+
+		List<FinalObject> filteredList = r.stream().filter(x -> x.getCount() >= cpus).collect(Collectors.toList());		
+
+		return filteredList;
+	}
+
 }
